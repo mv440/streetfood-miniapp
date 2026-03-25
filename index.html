@@ -421,10 +421,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-// ── API URL — bot serveringiz manzilini shu yerga kiriting ────
-// Lokal test: 'http://localhost:3001'
-// VPS:        'http://89.167.92.162:3001'
-const API_URL = 'http://89.167.92.162:3001';
+// ── API URL ────────────────────────────────────────────────────
+// HTTP nginx proxy (port 80, tashqaridan ochiq)
+// Port 443 Hetzner Console dan ochilsa: 'https://89-167-92-162.nip.io'
+const API_URL = 'http://89-167-92-162.nip.io';
 
 // ── MENYU ─────────────────────────────────────────────────────
 const CATS = [
@@ -585,61 +585,69 @@ function previewOrder() {
 }
 
 // ── SUCCESS EKRAN ─────────────────────────────────────────────
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function showSuccessScreen(p) {
+  // null guard
+  if (!p || !Array.isArray(p.items)) { console.error('showSuccessScreen: payload yo\'q'); return; }
+
   // Oldingi trackingni to'xtatish
   if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
   currentOrderId = null;
 
-  // Steps reset — barchasi nofaol
+  // Steps reset
   for (let i = 0; i < 4; i++) document.getElementById('step' + i).className = 'sp-step';
 
-  // Send tugmasini ko'rsatish
+  // Send tugmasi reset
   document.getElementById('spSendWrap').style.display = '';
   const btn = document.getElementById('spSendBtn');
   btn.className = 'sp-btn'; btn.innerHTML = '✅ Zakazni tasdiqlash'; btn.disabled = false;
 
-  // Status badge — boshlang'ich
-  setStatusBadge('wait', '⏳ Tasdiqlash tugmasini bosing', 'Zakazni bot orqali yuborish uchun');
+  // Header reset
+  document.querySelector('.sp-check').textContent = '✅';
+  document.querySelector('.sp-title').textContent = 'ZAKAZ TAYYOR!';
+  document.querySelector('.sp-title').style.color = 'var(--green)';
 
-  // Order ID placeholder
+  setStatusBadge('wait', '⏳ Tasdiqlash tugmasini bosing', 'Zakazni bot orqali yuborish uchun');
   document.getElementById('spOid').textContent = '#...';
   document.getElementById('spItemCount').textContent = p.items.length + ' ta taom';
 
-  // Mahsulotlar
-  document.getElementById('spItems').innerHTML = p.items.map(i => `
-    <div class="sp-item">
-      <div class="sp-item-left">
-        <div class="sp-item-emoji">${i.emoji}</div>
-        <div class="sp-item-info">
-          <div class="sp-item-name">${i.name}</div>
-          <div class="sp-item-qty">×${i.qty} dona</div>
-        </div>
-      </div>
-      <div class="sp-item-price">${(i.price*i.qty).toLocaleString()} so'm</div>
-    </div>`).join('');
+  // Mahsulotlar — XSS himoyasi: textContent ishlatiladi, innerHTML emas
+  const spItems = document.getElementById('spItems');
+  spItems.innerHTML = '';
+  p.items.forEach(i => {
+    const row   = document.createElement('div'); row.className = 'sp-item';
+    const left  = document.createElement('div'); left.className = 'sp-item-left';
+    const emoji = document.createElement('div'); emoji.className = 'sp-item-emoji'; emoji.textContent = i.emoji;
+    const info  = document.createElement('div'); info.className = 'sp-item-info';
+    const name  = document.createElement('div'); name.className = 'sp-item-name';  name.textContent = i.name;
+    const qty   = document.createElement('div'); qty.className  = 'sp-item-qty';   qty.textContent  = `×${i.qty} dona`;
+    const price = document.createElement('div'); price.className = 'sp-item-price';
+    price.textContent = (i.price * i.qty).toLocaleString() + ' so\'m';
+    info.append(name, qty); left.append(emoji, info); row.append(left, price); spItems.append(row);
+  });
 
   document.getElementById('spTotal').textContent = p.total.toLocaleString() + ' so\'m';
 
-  // Mijoz
-  document.getElementById('spName').innerHTML  = `${p.name}<span>Mijoz ismi</span>`;
-  document.getElementById('spPhone').innerHTML = `${p.phone}<span>Telefon</span>`;
-  document.getElementById('spDel').innerHTML   = p.delType==='delivery'
-    ? `🛵 Yetkazib berish<span>Usul</span>`
-    : `🏃 O'zi oladi<span>Usul</span>`;
+  // Mijoz — textContent bilan XSS himoyasi
+  const nameEl  = document.getElementById('spName');
+  const phoneEl = document.getElementById('spPhone');
+  const delEl   = document.getElementById('spDel');
+  nameEl.textContent  = p.name;  nameEl.insertAdjacentHTML('beforeend',  '<span>Mijoz ismi</span>');
+  phoneEl.textContent = p.phone; phoneEl.insertAdjacentHTML('beforeend', '<span>Telefon</span>');
+  delEl.textContent   = p.delType === 'delivery' ? '🛵 Yetkazib berish' : '🏃 O\'zi oladi';
+  delEl.insertAdjacentHTML('beforeend', '<span>Usul</span>');
 
   const addrRow = document.getElementById('spAddrRow');
-  if(p.addr) {
-    document.getElementById('spAddr').innerHTML = `${p.addr}<span>Manzil</span>`;
-    addrRow.style.display='flex';
+  if (p.addr) {
+    const addrEl = document.getElementById('spAddr');
+    addrEl.textContent = p.addr; addrEl.insertAdjacentHTML('beforeend', '<span>Manzil</span>');
+    addrRow.style.display = 'flex';
   } else {
-    addrRow.style.display='none';
+    addrRow.style.display = 'none';
   }
-
-  // Send tugmasini reset
-  const btn = document.getElementById('spSendBtn');
-  btn.className = 'sp-btn';
-  btn.innerHTML = '📤 Botga yuborish';
-  btn.disabled  = false;
 
   document.getElementById('successPage').classList.add('show');
 }
@@ -671,7 +679,7 @@ const STEP_MAP = {
   delivering: 2,  // step0,1=done, step2=active
   ready:      2,
   done:       4,  // barchasi done
-  cancelled:  0,
+  cancelled:  -1, // hech qaysi active emas (0 bo'lsa 1-step active ko'rinardi)
 };
 const STATUS_INFO = {
   pending:    ['pending',  '✅ Zakaz qabul qilindi!',        'Oshpaz tayyorlamoqda...'],
@@ -688,8 +696,9 @@ function updateSteps(status) {
   for (let i = 0; i < 4; i++) {
     const el = document.getElementById('step' + i);
     el.className = 'sp-step';
-    if (isDone || i < active)          el.classList.add('done');
-    else if (i === active && !isDone)  el.classList.add('active');
+    if (isDone || (active >= 0 && i < active)) el.classList.add('done');
+    else if (i === active && !isDone && active >= 0) el.classList.add('active');
+    // cancelled (active = -1): hech qaysi class qo'shilmaydi
   }
 }
 
@@ -714,14 +723,29 @@ function applyStatus(status, courierName) {
 
 function startTracking(orderId) {
   applyStatus('pending', null);
-  trackingInterval = setInterval(async () => {
+
+  async function poll() {
     try {
-      const res  = await fetch(`${API_URL}/api/order/${orderId}`);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000); // 8s timeout
+      const res  = await fetch(`${API_URL}/api/order/${orderId}`, { signal: ctrl.signal });
+      clearTimeout(t);
       if (!res.ok) return;
       const data = await res.json();
       applyStatus(data.status, data.courierName);
     } catch { /* internet o'chsa ham davom etadi */ }
-  }, 3000);
+  }
+
+  trackingInterval = setInterval(poll, 3000);
+
+  // Battery optimization: fon rejimida polling to'xtaydi
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearInterval(trackingInterval); trackingInterval = null;
+    } else if (!trackingInterval && currentOrderId) {
+      startTracking(currentOrderId); // Qayta ochilganda davom etadi
+    }
+  });
 }
 
 // ── SEND TO BOT (fetch API) ────────────────────────────────────
@@ -735,26 +759,34 @@ async function sendOrder() {
 
   const initData = tg?.initData || '';
 
-  // initData yo'q = brauzerda test
+  // initData yo'q = Telegram orqali ochilmagan
   if (!initData) {
-    setTimeout(() => {
-      const fakeId = 'SF' + Math.random().toString(16).slice(2, 10).toUpperCase();
-      document.getElementById('spOid').textContent   = '#' + fakeId;
-      document.getElementById('spSendWrap').style.display = 'none';
-      document.querySelector('.sp-title').textContent = 'ZAKAZ YUBORILDI!';
-      startTracking(fakeId); // API polling (test uchun)
-    }, 600);
+    btn.disabled = false; btn.innerHTML = '✅ Zakazni tasdiqlash'; btn.className = 'sp-btn';
+    setStatusBadge('error', '⚠️ Telegram orqali oching', 'Bot da "🌭 Zakaz olish" tugmasini bosing');
     return;
   }
 
   try {
+    // 12s timeout — server javob bermasa kutmaydi
+    const ctrl    = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 12000);
+
     const res  = await fetch(`${API_URL}/api/order`, {
       method:  'POST',
+      signal:  ctrl.signal,
       headers: { 'Content-Type': 'application/json', 'x-init-data': initData },
       body:    JSON.stringify(pendingPayload),
     });
+    clearTimeout(timeout);
+
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error || `Server xato (${res.status})`);
+    if (!res.ok) {
+      // initData eskirgan bo'lsa aniq xabar
+      const errMsg = (json.error || '').includes('eskirgan')
+        ? 'Telegram ni qayta oching (sessiya eskirgan)'
+        : (json.error || `Server xato (${res.status})`);
+      throw new Error(errMsg);
+    }
 
     currentOrderId = json.orderId;
     document.getElementById('spOid').textContent        = '#' + json.orderId;
@@ -763,10 +795,13 @@ async function sendOrder() {
     startTracking(json.orderId);
 
   } catch (e) {
+    // Interval leak oldini olish
+    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
     btn.disabled  = false;
     btn.innerHTML = '🔄 Qayta urinish';
     btn.className = 'sp-btn';
-    setStatusBadge('error', '❌ Yuborishda xato', e.message.slice(0, 60));
+    const msg = e.name === 'AbortError' ? 'Server javob bermadi (timeout)' : e.message;
+    setStatusBadge('error', '❌ Yuborishda xato', msg.slice(0, 70));
   }
 }
 

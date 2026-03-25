@@ -7,7 +7,8 @@ require('dotenv').config();
 
 const { Telegraf, Markup } = require('telegraf');
 const { message }          = require('telegraf/filters');
-const { randomBytes }      = require('crypto');
+const { randomBytes, createHmac } = require('crypto');
+const express              = require('express');
 
 // ─── ENV ─────────────────────────────────────────────────────
 const BOT_TOKEN    = process.env.BOT_TOKEN;
@@ -23,6 +24,19 @@ if (!MINI_APP_URL) { console.warn('⚠️  MINI_APP_URL .env da yo\'q'); }
 
 // ─── BOT ─────────────────────────────────────────────────────
 const bot = new Telegraf(BOT_TOKEN);
+
+// ─── DEBUG middleware — BIRINCHI bo'lib ishlaydi ─────────────
+bot.use(async (ctx, next) => {
+  const t   = ctx.updateType;
+  const uid = ctx.from?.id;
+  console.log(`[UPDATE] type=${t} uid=${uid}`);
+  if (t === 'message') {
+    const m = ctx.message;
+    if (m?.web_app_data) console.log('[WEB_APP_DATA]', m.web_app_data.data?.slice(0, 120));
+    else if (m?.text)    console.log('[TEXT]', m.text);
+  }
+  return next();
+});
 
 // ─── IN-MEMORY STORE ─────────────────────────────────────────
 const orders = {};        // orderId → order
@@ -82,7 +96,10 @@ async function updateSellerMsg(order) {
       orderMsg(order),
       { parse_mode: 'HTML' }
     );
-  } catch {}
+  } catch (e) {
+    // Silent emas — logda ko'rinsin (message o'chirilgan bo'lishi mumkin)
+    console.warn(`[updateSellerMsg] #${order.orderId}: ${e.message}`);
+  }
 }
 
 // ─── MESSAGE BUILDERS ────────────────────────────────────────
@@ -152,91 +169,20 @@ bot.start(ctx => {
 // ════════════════════════════════════════════════════════════
 bot.hears('🌭 Zakaz olish', ctx => {
   if (!isSeller(ctx.from.id)) return;
+  // CRITICAL FIX: sendData() faqat KeyboardButton (reply keyboard) da ishlaydi
+  // InlineKeyboardButton bilan sendData() ISHLAMAYDI — Telegram API cheklovi
   ctx.reply(
-    '📲 Quyidagi tugmani bosib menyu oching:',
-    Markup.inlineKeyboard([[Markup.button.webApp('🍔 Menyu ochish', MINI_APP_URL)]])
+    '📲 Pastdagi "🍔 Menyu ochish" tugmasini bosing:',
+    Markup.keyboard([[Markup.button.webApp('🍔 Menyu ochish', MINI_APP_URL)]])
+      .resize()
+      .oneTime()
   );
 });
 
-// ─── WEB_APP_DATA: Mini App dan zakaz kelishi ────────────────
-bot.on(message('web_app_data'), async ctx => {
-  if (!isSeller(ctx.from.id)) return;
 
-  let data;
-  try {
-    const raw = ctx.message.web_app_data.data;
-    // FIX #6: Hajm cheki — 10KB dan katta JSON rad etiladi
-    if (raw.length > 10_000) return ctx.reply('❌ Zakaz ma\'lumoti juda katta.');
-    data = JSON.parse(raw);
-  } catch {
-    return ctx.reply('❌ Zakaz ma\'lumotida xato. Qayta urinib ko\'ring.');
-  }
+// Zakazlar endi POST /api/order orqali keladi (real-time tracking uchun).
+// web_app_data handler olib tashlandi — ikki parallel kanal muammosini oldini olish uchun.
 
-  // FIX #7: Majburiy maydonlar tekshiruvi
-  const name  = String(data.name  || '').trim().slice(0, 100);
-  const phone = String(data.phone || '').replace(/\s/g, '').slice(0, 20);
-  const addr  = data.delType === 'delivery' ? String(data.addr || '').slice(0, 200) : '';
-  const note  = String(data.note  || '').slice(0, 300);
-
-  if (!name || name.length < 2)       return ctx.reply('❌ Mijoz ismi kiritilmagan.');
-  if (!phone)                          return ctx.reply('❌ Telefon raqam kiritilmagan.');
-  if (!/^\+?[0-9]{9,13}$/.test(phone)) return ctx.reply('❌ Telefon raqam noto\'g\'ri formatta.');
-
-  // FIX #6: Har bir mahsulot validatsiyasi
-  if (!Array.isArray(data.items) || data.items.length === 0) {
-    return ctx.reply('❌ Savatcha bo\'sh.');
-  }
-  const items = data.items
-    .filter(i => i && typeof i.name === 'string' && Number(i.qty) > 0 && Number(i.price) > 0)
-    .map(i => ({
-      name:  String(i.name).slice(0, 50),
-      emoji: String(i.emoji || '🍔').slice(0, 6),
-      qty:   Math.min(Math.floor(Math.abs(Number(i.qty))),   99),
-      price: Math.min(Math.floor(Math.abs(Number(i.price))), 10_000_000),
-    }));
-
-  if (items.length === 0) return ctx.reply('❌ Yaroqli mahsulotlar yo\'q.');
-
-  // Server tomonida hamma narsa hisoblanadi — klientdagi totalni ishlatmaymiz
-  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
-
-  // FIX #8: Server tomonida kriptografik ID
-  const orderId = genOrderId();
-  const order = {
-    orderId,
-    name, phone, addr, note,
-    delType:    data.delType === 'pickup' ? 'pickup' : 'delivery',
-    items,
-    total,
-    status:     'pending',
-    sellerId:   ctx.from.id,
-    sellerName: ctx.from.first_name || 'Sotuvchi',
-    createdAt:  new Date(),
-  };
-  orders[orderId] = order;
-
-  // Sotuvchiga zakaz kartochkasi yuboriladi — status o'zgarganda shu xabar yangilanadi
-  const sellerMsg = await ctx.reply(orderMsg(order), { parse_mode: 'HTML' });
-  order.sellerMsgId = sellerMsg.message_id;
-  order.sellerChatId = ctx.from.id;
-
-  let sent = 0;
-  for (const cid of COURIER_IDS) {
-    try {
-      await bot.telegram.sendMessage(cid, orderMsg(order), {
-        parse_mode: 'HTML',
-        ...courierBtns(orderId),
-      });
-      sent++;
-    } catch (e) {
-      console.error(`Kuryer ${cid}:`, e.message);
-    }
-  }
-  if (sent === 0) {
-    await ctx.reply('⚠️ Hech bir kuryerga yuborib bo\'lmadi. Telefon orqali bog\'laning.');
-    await notifyAdmin(`Zakaz #${orderId} — hech bir kuryerga yuborilmadi!`);
-  }
-});
 
 bot.hears('📋 Bugungi zakazlar', async ctx => {
   if (!isSeller(ctx.from.id)) return;
@@ -563,9 +509,172 @@ bot.catch(async (err, ctx) => {
   await notifyAdmin(msg);
 });
 
+// ════════════════════════════════════════════════════════════
+//  EXPRESS API — Mini App real-time tracking uchun
+// ════════════════════════════════════════════════════════════
+const apiApp   = express();
+const API_PORT = Number(process.env.API_PORT || 3001);
+
+// initData HMAC-SHA256 validatsiyasi (TMA xavfsizlik standarti)
+function validateInitData(initDataStr) {
+  if (!initDataStr) throw new Error('initData yo\'q');
+  const params = new URLSearchParams(initDataStr);
+  const hash   = params.get('hash');
+  if (!hash) throw new Error('Hash yo\'q');
+  params.delete('hash');
+
+  const dataCheckString = [...params.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+
+  const secret   = createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  const expected = createHmac('sha256', secret).update(dataCheckString).digest('hex');
+
+  // timingSafeEqual — buffer uzunliklari teng bo'lishi shart
+  // Agar hash noto'g'ri formatda bo'lsa (64 char emas), early reject
+  if (expected.length !== hash.length) throw new Error('Imzo noto\'g\'ri');
+  const { timingSafeEqual } = require('crypto');
+  if (!timingSafeEqual(Buffer.from(expected, 'utf8'), Buffer.from(hash, 'utf8')))
+    throw new Error('Imzo noto\'g\'ri');
+
+  const authDate = Number(params.get('auth_date') || 0);
+  if (Date.now() / 1000 - authDate > 86400)
+    throw new Error('initData eskirgan (>24 soat)');
+
+  return JSON.parse(params.get('user') || '{}');
+}
+
+// CORS — faqat Mini App domenlariga
+apiApp.use((req, res, next) => {
+  const origin  = req.headers.origin || '';
+  const allowed = [
+    'https://mv440.github.io',
+    'https://web.telegram.org',
+    'https://webk.telegram.org',
+    'https://webz.telegram.org',
+    'https://a.tg.dev',
+  ];
+  if (!origin || allowed.some(a => origin.startsWith(a)) || origin.endsWith('.github.io')) {
+    res.setHeader('Access-Control-Allow-Origin',  origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-init-data');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+apiApp.use(express.json({ limit: '20kb' }));
+// Malformed JSON uchun 400 qaytarish (default Express 500 qaytaradi)
+apiApp.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed')
+    return res.status(400).json({ error: 'Noto\'g\'ri JSON format' });
+  next(err);
+});
+
+// POST /api/order — Mini App dan zakaz qabul qilish
+apiApp.post('/api/order', async (req, res) => {
+  // 1. initData tekshiruvi
+  let tgUser;
+  try {
+    tgUser = validateInitData(req.headers['x-init-data'] || '');
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+
+  const sellerId = tgUser.id;
+  if (!isSeller(sellerId))
+    return res.status(403).json({ error: 'Sotuvchi emas' });
+
+  // 2. Ma'lumotlar validatsiyasi
+  const d     = req.body;
+  const name  = String(d.name  || '').trim().slice(0, 100);
+  const phone = String(d.phone || '').replace(/\s/g, '').slice(0, 20);
+  const addr  = d.delType === 'delivery' ? String(d.addr || '').slice(0, 200) : '';
+  const note  = String(d.note  || '').slice(0, 300);
+
+  if (!name || name.length < 2)         return res.status(400).json({ error: 'Ism kiritilmagan' });
+  if (!phone)                            return res.status(400).json({ error: 'Tel raqam kiritilmagan' });
+  if (!/^\+?[0-9]{9,13}$/.test(phone))  return res.status(400).json({ error: 'Tel raqam noto\'g\'ri' });
+  if (!Array.isArray(d.items) || !d.items.length)
+    return res.status(400).json({ error: 'Savatcha bo\'sh' });
+
+  const items = d.items
+    .filter(i => i && typeof i.name === 'string' && Number(i.qty) > 0 && Number(i.price) > 0)
+    .map(i => ({
+      name:  String(i.name).slice(0, 50),
+      emoji: String(i.emoji || '🍔').slice(0, 6),
+      qty:   Math.min(Math.floor(Math.abs(Number(i.qty))),   99),
+      price: Math.min(Math.floor(Math.abs(Number(i.price))), 10_000_000),
+    }));
+  if (!items.length) return res.status(400).json({ error: 'Yaroqli mahsulotlar yo\'q' });
+
+  const total   = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const orderId = genOrderId();
+
+  const order = {
+    orderId, name, phone, addr, note,
+    delType:      d.delType === 'pickup' ? 'pickup' : 'delivery',
+    items, total,
+    status:       'pending',
+    sellerId,
+    sellerChatId: sellerId,
+    sellerName:   tgUser.first_name || 'Sotuvchi',
+    createdAt:    new Date(),
+  };
+  orders[orderId] = order;
+
+  // 3. Sotuvchiga Telegram xabari
+  try {
+    const sm = await bot.telegram.sendMessage(sellerId, orderMsg(order), { parse_mode: 'HTML' });
+    order.sellerMsgId = sm.message_id;
+  } catch (e) {
+    console.error('Sotuvchiga yuborishda xato:', e.message);
+  }
+
+  // 4. Kuryerlarga yuborish
+  let sent = 0;
+  for (const cid of COURIER_IDS) {
+    try {
+      await bot.telegram.sendMessage(cid, orderMsg(order), {
+        parse_mode: 'HTML',
+        ...courierBtns(orderId),
+      });
+      sent++;
+    } catch (e) {
+      console.error(`Kuryer ${cid}:`, e.message);
+    }
+  }
+  if (sent === 0) await notifyAdmin(`Zakaz #${orderId} — hech bir kuryerga yuborilmadi!`);
+
+  console.log(`[API] Yangi zakaz #${orderId} — ${name}`);
+  res.json({ orderId, status: 'pending' });
+});
+
+// GET /api/order/:id — real-time status
+apiApp.get('/api/order/:id', (req, res) => {
+  const order = orders[req.params.id];
+  if (!order) return res.status(404).json({ error: 'Zakaz topilmadi' });
+  res.json({
+    orderId:     order.orderId,
+    status:      order.status,
+    statusLabel: statusLabel(order.status),
+    courierName: order.courierName || null,
+  });
+});
+
+apiApp.listen(API_PORT, '0.0.0.0', () => {
+  console.log(`🌐 API server :${API_PORT} da ishga tushdi`);
+}).on('error', err => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${API_PORT} band! Boshqa process ishlatmoqda.`);
+    process.exit(1);
+  }
+  console.error('❌ API server xato:', err.message);
+});
+
 // ─── LAUNCH ──────────────────────────────────────────────────
 bot.launch()
-  .then(() => console.log('✅ Street Food Bot v3.1 ishga tushdi!'))
+  .then(() => console.log('✅ Street Food Bot v3.2 ishga tushdi!'))
   .catch(err => { console.error('Launch xato:', err.message); process.exit(1); });
 
 process.once('SIGINT',  () => bot.stop('SIGINT'));
