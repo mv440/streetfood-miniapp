@@ -341,7 +341,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
   <div class="sp-header">
     <div class="sp-check">✅</div>
     <div class="sp-title">ZAKAZ TAYYOR!</div>
-    <div class="sp-oid" id="spOid">#SF000000</div>
+    <div class="sp-oid" id="spOid">Buyurtma №...</div>
   </div>
 
   <!-- Status qadamlari -->
@@ -611,7 +611,7 @@ function showSuccessScreen(p) {
   document.querySelector('.sp-title').style.color = 'var(--green)';
 
   setStatusBadge('wait', '⏳ Tasdiqlash tugmasini bosing', 'Zakazni bot orqali yuborish uchun');
-  document.getElementById('spOid').textContent = '#...';
+  document.getElementById('spOid').textContent = 'Buyurtma №...';
   document.getElementById('spItemCount').textContent = p.items.length + ' ta taom';
 
   // Mahsulotlar — XSS himoyasi: textContent ishlatiladi, innerHTML emas
@@ -789,7 +789,7 @@ async function sendOrder() {
     }
 
     currentOrderId = json.orderId;
-    document.getElementById('spOid').textContent        = '#' + json.orderId;
+    document.getElementById('spOid').textContent        = 'Buyurtma №' + json.orderId;
     document.getElementById('spSendWrap').style.display = 'none';
     document.querySelector('.sp-title').textContent     = 'ZAKAZ YUBORILDI!';
     startTracking(json.orderId);
