@@ -762,7 +762,8 @@ async function sendOrder() {
   // initData yo'q = Telegram orqali ochilmagan
   if (!initData) {
     btn.disabled = false; btn.innerHTML = '✅ Zakazni tasdiqlash'; btn.className = 'sp-btn';
-    setStatusBadge('error', '⚠️ Telegram orqali oching', 'Bot da "🌭 Zakaz olish" tugmasini bosing');
+    const dbg = tg ? `initData bo'sh (platform: ${tg.platform||'?'})` : 'window.Telegram.WebApp yuklanmagan';
+    setStatusBadge('error', '⚠️ Telegram orqali oching', dbg);
     return;
   }
 
