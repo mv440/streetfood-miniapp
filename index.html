@@ -400,18 +400,18 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
   </div>
 
   <!-- Status -->
-  <div class="sp-status">
-    <div class="sp-status-dot"></div>
+  <div class="sp-status" id="spStatusBox">
+    <div class="sp-status-dot" id="spStatusDot"></div>
     <div>
-      <div class="sp-status-text">⏳ Zakaz kutilmoqda</div>
-      <div class="sp-status-sub">Telegram da yangilanishlarni kuzating</div>
+      <div class="sp-status-text" id="spStatusText">⏳ Tasdiqlash tugmasini bosing</div>
+      <div class="sp-status-sub"  id="spStatusSub">Zakazni bot orqali yuborish uchun</div>
     </div>
   </div>
 
   <!-- Yuborish tugmasi -->
-  <div class="sp-send-btn">
+  <div class="sp-send-btn" id="spSendWrap">
     <button class="sp-btn" id="spSendBtn" onclick="sendOrder()">
-      📤 Botga yuborish
+      ✅ Zakazni tasdiqlash
     </button>
   </div>
 </div>
@@ -420,6 +420,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
 // ── Telegram WebApp ───────────────────────────────────────────
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
+
+// ── API URL — bot serveringiz manzilini shu yerga kiriting ────
+// Lokal test: 'http://localhost:3001'
+// VPS:        'http://89.167.92.162:3001'
+const API_URL = 'http://89.167.92.162:3001';
 
 // ── MENYU ─────────────────────────────────────────────────────
 const CATS = [
@@ -448,7 +453,9 @@ const MENU = [
 let cart    = {};
 let curCat  = 'all';
 let delType = 'delivery';
-let pendingPayload = null; // yuborilishi kutayotgan zakaz
+let pendingPayload   = null;   // yuborilishi kutayotgan zakaz
+let trackingInterval = null;   // polling interval
+let currentOrderId   = null;   // yuborilgan zakaz IDsi
 
 // ── TABS ──────────────────────────────────────────────────────
 function renderTabs() {
@@ -579,8 +586,23 @@ function previewOrder() {
 
 // ── SUCCESS EKRAN ─────────────────────────────────────────────
 function showSuccessScreen(p) {
-  // Order ID preview (haqiqiy ID bot tomonida generatsiya qilinadi)
-  document.getElementById('spOid').textContent = '⏳ Yuborilmoqda...';
+  // Oldingi trackingni to'xtatish
+  if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+  currentOrderId = null;
+
+  // Steps reset — barchasi nofaol
+  for (let i = 0; i < 4; i++) document.getElementById('step' + i).className = 'sp-step';
+
+  // Send tugmasini ko'rsatish
+  document.getElementById('spSendWrap').style.display = '';
+  const btn = document.getElementById('spSendBtn');
+  btn.className = 'sp-btn'; btn.innerHTML = '✅ Zakazni tasdiqlash'; btn.disabled = false;
+
+  // Status badge — boshlang'ich
+  setStatusBadge('wait', '⏳ Tasdiqlash tugmasini bosing', 'Zakazni bot orqali yuborish uchun');
+
+  // Order ID placeholder
+  document.getElementById('spOid').textContent = '#...';
   document.getElementById('spItemCount').textContent = p.items.length + ' ta taom';
 
   // Mahsulotlar
@@ -622,23 +644,129 @@ function showSuccessScreen(p) {
   document.getElementById('successPage').classList.add('show');
 }
 
-// ── SEND TO BOT ───────────────────────────────────────────────
-function sendOrder() {
-  if(!pendingPayload) return;
+// ── STATUS BADGE YORDAMCHI ────────────────────────────────────
+function setStatusBadge(type, text, sub) {
+  const box  = document.getElementById('spStatusBox');
+  const dot  = document.getElementById('spStatusDot');
+  const colors = {
+    wait:      ['rgba(136,136,136,.1)', '#888'],
+    pending:   ['rgba(48,209,88,.06)',  'var(--green)'],
+    cooking:   ['rgba(255,107,43,.08)', 'var(--orange)'],
+    on_road:   ['rgba(255,107,43,.08)', 'var(--orange)'],
+    done:      ['rgba(48,209,88,.12)',  'var(--green)'],
+    error:     ['rgba(255,69,58,.1)',   'var(--red)'],
+  };
+  const [bg, dotColor] = colors[type] || colors.wait;
+  box.style.background  = bg;
+  dot.style.background  = dotColor;
+  dot.style.animationName = (type === 'done' || type === 'wait') ? 'none' : 'blink';
+  document.getElementById('spStatusText').textContent = text;
+  document.getElementById('spStatusSub').textContent  = sub;
+}
+
+// ── REAL-TIME TRACKING ────────────────────────────────────────
+const STEP_MAP = {
+  pending:    1,  // step0=done, step1=active
+  cooking:    1,
+  delivering: 2,  // step0,1=done, step2=active
+  ready:      2,
+  done:       4,  // barchasi done
+  cancelled:  0,
+};
+const STATUS_INFO = {
+  pending:    ['pending',  '✅ Zakaz qabul qilindi!',        'Oshpaz tayyorlamoqda...'],
+  cooking:    ['cooking',  '👨‍🍳 Tayyorlanmoqda',              'Buyurtmangiz tayyorlanmoqda...'],
+  delivering: ['on_road',  '🛵 Kuryer yo\'lda!',              'Yetkazib berilmoqda...'],
+  ready:      ['on_road',  '✅ Tayyor! Kuryer oldi',          'Kuryerni kutmoqda...'],
+  done:       ['done',     '🎉 Yakunlandi! Rahmat!',          'Buyurtmangiz yetkazildi'],
+  cancelled:  ['error',    '❌ Zakaz bekor qilindi',          'Admin bilan bog\'laning'],
+};
+
+function updateSteps(status) {
+  const active = STEP_MAP[status] ?? 1;
+  const isDone = status === 'done';
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('step' + i);
+    el.className = 'sp-step';
+    if (isDone || i < active)          el.classList.add('done');
+    else if (i === active && !isDone)  el.classList.add('active');
+  }
+}
+
+function applyStatus(status, courierName) {
+  updateSteps(status);
+  let [type, text, sub] = STATUS_INFO[status] || STATUS_INFO.pending;
+  if (courierName && ['delivering', 'ready'].includes(status))
+    text = `🛵 ${courierName} yo\'lda!`;
+  setStatusBadge(type, text, sub);
+
+  // Header o'zgartirish
+  if (status === 'done') {
+    document.querySelector('.sp-check').textContent = '🎉';
+    document.querySelector('.sp-title').textContent = 'YETKAZILDI!';
+    document.querySelector('.sp-title').style.color = 'var(--green)';
+    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+  } else if (status === 'delivering' || status === 'ready') {
+    document.querySelector('.sp-check').textContent = '🛵';
+    document.querySelector('.sp-title').style.color = 'var(--orange)';
+  }
+}
+
+function startTracking(orderId) {
+  applyStatus('pending', null);
+  trackingInterval = setInterval(async () => {
+    try {
+      const res  = await fetch(`${API_URL}/api/order/${orderId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      applyStatus(data.status, data.courierName);
+    } catch { /* internet o'chsa ham davom etadi */ }
+  }, 3000);
+}
+
+// ── SEND TO BOT (fetch API) ────────────────────────────────────
+async function sendOrder() {
+  if (!pendingPayload) return;
   const btn = document.getElementById('spSendBtn');
-  btn.disabled = true;
+  btn.disabled  = true;
   btn.innerHTML = '⏳ Yuborilmoqda...';
   btn.className = 'sp-btn sent';
+  setStatusBadge('wait', '⏳ Yuborilmoqda...', 'Biroz kuting...');
 
-  if(tg) {
-    tg.sendData(JSON.stringify(pendingPayload));
-    // sendData Mini Appni yopadi
-  } else {
-    // Test uchun (brauzerda)
-    setTimeout(()=>{
-      document.getElementById('spOid').textContent = '#SF_TEST';
-      btn.innerHTML = '✅ Yuborildi!';
-    }, 800);
+  const initData = tg?.initData || '';
+
+  // initData yo'q = brauzerda test
+  if (!initData) {
+    setTimeout(() => {
+      const fakeId = 'SF' + Math.random().toString(16).slice(2, 10).toUpperCase();
+      document.getElementById('spOid').textContent   = '#' + fakeId;
+      document.getElementById('spSendWrap').style.display = 'none';
+      document.querySelector('.sp-title').textContent = 'ZAKAZ YUBORILDI!';
+      startTracking(fakeId); // API polling (test uchun)
+    }, 600);
+    return;
+  }
+
+  try {
+    const res  = await fetch(`${API_URL}/api/order`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-init-data': initData },
+      body:    JSON.stringify(pendingPayload),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `Server xato (${res.status})`);
+
+    currentOrderId = json.orderId;
+    document.getElementById('spOid').textContent        = '#' + json.orderId;
+    document.getElementById('spSendWrap').style.display = 'none';
+    document.querySelector('.sp-title').textContent     = 'ZAKAZ YUBORILDI!';
+    startTracking(json.orderId);
+
+  } catch (e) {
+    btn.disabled  = false;
+    btn.innerHTML = '🔄 Qayta urinish';
+    btn.className = 'sp-btn';
+    setStatusBadge('error', '❌ Yuborishda xato', e.message.slice(0, 60));
   }
 }
 
