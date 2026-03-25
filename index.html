@@ -16,146 +16,64 @@
   --orange:  #ff6b2b;
   --orange2: #ff9500;
   --green:   #30d158;
+  --red:     #ff453a;
   --text:    #f5f5f5;
   --muted:   #888;
   --sub:     #555;
 }
-
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
 
-body {
-  font-family:'DM Sans',sans-serif;
-  background:var(--bg); color:var(--text);
-  min-height:100vh; overflow-x:hidden;
-}
-
-/* HEADER */
-.header {
-  background:var(--bg); border-bottom:1px solid var(--border);
-  padding:14px 16px 10px;
-  position:sticky; top:0; z-index:50;
-}
+/* ── HEADER ── */
+.header { background:var(--bg); border-bottom:1px solid var(--border); padding:14px 16px 10px; position:sticky; top:0; z-index:50; }
 .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.brand {
-  font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
-  background:linear-gradient(90deg,var(--orange),var(--orange2));
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-.cart-pill {
-  display:flex; align-items:center; gap:7px;
-  background:var(--orange); color:#fff;
-  border:none; border-radius:50px; padding:8px 14px;
-  font-size:14px; font-weight:600; cursor:pointer; transition:transform .15s;
-}
+.brand { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; background:linear-gradient(90deg,var(--orange),var(--orange2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.cart-pill { display:flex; align-items:center; gap:7px; background:var(--orange); color:#fff; border:none; border-radius:50px; padding:8px 14px; font-size:14px; font-weight:600; cursor:pointer; transition:transform .15s; }
 .cart-pill:active { transform:scale(.93); }
-.badge {
-  background:rgba(255,255,255,.25); border-radius:50%;
-  width:20px; height:20px; display:flex; align-items:center; justify-content:center;
-  font-size:11px; font-weight:700;
-}
-
-/* TABS */
+.badge { background:rgba(255,255,255,.25); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
 .tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
 .tabs::-webkit-scrollbar { display:none; }
-.tab {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:20px; padding:6px 13px;
-  font-size:13px; font-weight:600; color:var(--muted);
-  cursor:pointer; white-space:nowrap; transition:all .2s;
-}
+.tab { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:6px 13px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap; transition:all .2s; }
 .tab.active { background:var(--orange); border-color:var(--orange); color:#fff; }
 
-/* GRID */
-.grid {
-  display:grid; grid-template-columns:1fr 1fr;
-  gap:10px; padding:14px 12px 110px;
-}
-.card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:14px; overflow:hidden; position:relative; transition:transform .15s;
-}
+/* ── GRID ── */
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 12px 110px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; position:relative; transition:transform .15s; }
 .card:active { transform:scale(.97); }
-.card-emoji {
-  background:var(--surface); height:82px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:44px; border-bottom:1px solid var(--border);
-}
-.card-dot {
-  position:absolute; top:8px; right:8px;
-  background:var(--orange); color:#fff; border-radius:50%;
-  width:22px; height:22px; display:none;
-  align-items:center; justify-content:center;
-  font-size:11px; font-weight:800;
-}
+.card-emoji { background:var(--surface); height:82px; display:flex; align-items:center; justify-content:center; font-size:44px; border-bottom:1px solid var(--border); }
+.card-dot { position:absolute; top:8px; right:8px; background:var(--orange); color:#fff; border-radius:50%; width:22px; height:22px; display:none; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
 .card-body { padding:9px 10px 10px; }
 .card-name { font-weight:600; font-size:13px; line-height:1.3; margin-bottom:3px; }
-.card-price {
-  font-family:'Syne',sans-serif; font-size:15px;
-  color:var(--orange2); font-weight:700; margin-bottom:7px;
-}
+.card-price { font-family:'Syne',sans-serif; font-size:15px; color:var(--orange2); font-weight:700; margin-bottom:7px; }
 .card-price small { font-family:'DM Sans',sans-serif; font-size:11px; color:var(--muted); font-weight:400; }
 .qty-row { display:flex; align-items:center; justify-content:space-between; }
-.qty-btn {
-  background:var(--surface); border:1px solid var(--border);
-  color:var(--text); width:28px; height:28px;
-  border-radius:8px; font-size:17px; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:opacity .15s;
-}
+.qty-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:8px; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .qty-btn.plus { background:var(--orange); border-color:var(--orange); }
 .qty-btn:active { opacity:.7; }
 .qty-num { font-weight:700; font-size:16px; min-width:24px; text-align:center; }
 
-/* BOTTOM BAR */
-.bottom-bar {
-  position:fixed; bottom:0; left:0; right:0;
-  background:var(--surface); border-top:1px solid var(--border);
-  padding:10px 14px 20px; display:none; z-index:40;
-}
+/* ── BOTTOM BAR ── */
+.bottom-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); padding:10px 14px 20px; display:none; z-index:40; }
 .bottom-bar.show { display:block; }
 .total-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .total-label { font-size:13px; color:var(--muted); }
 .total-sum { font-family:'Syne',sans-serif; font-size:20px; color:var(--orange2); font-weight:700; }
-.order-btn {
-  width:100%;
-  background:linear-gradient(90deg,var(--orange),var(--orange2));
-  border:none; color:#fff;
-  font-family:'Syne',sans-serif; font-size:17px; font-weight:700;
-  padding:14px; border-radius:14px; cursor:pointer; transition:transform .15s;
-}
+.order-btn { width:100%; background:linear-gradient(90deg,var(--orange),var(--orange2)); border:none; color:#fff; font-family:'Syne',sans-serif; font-size:17px; font-weight:700; padding:14px; border-radius:14px; cursor:pointer; }
 .order-btn:active { transform:scale(.98); }
 
-/* OVERLAY */
+/* ── OVERLAY / DRAWER ── */
 .overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; display:none; backdrop-filter:blur(3px); }
 .overlay.show { display:block; }
-
-/* DRAWER */
-.drawer {
-  position:fixed; bottom:0; left:0; right:0;
-  background:var(--surface); border-radius:22px 22px 0 0;
-  border-top:1px solid var(--border); z-index:110;
-  transform:translateY(105%); transition:transform .32s cubic-bezier(.34,1.3,.64,1);
-  max-height:90vh; display:flex; flex-direction:column;
-}
+.drawer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-radius:22px 22px 0 0; border-top:1px solid var(--border); z-index:110; transform:translateY(105%); transition:transform .32s cubic-bezier(.34,1.3,.64,1); max-height:90vh; display:flex; flex-direction:column; }
 .drawer.open { transform:translateY(0); }
 .d-handle { width:36px; height:4px; background:var(--sub); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
-.d-head {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:14px 18px 12px; border-bottom:1px solid var(--border); flex-shrink:0;
-}
+.d-head { display:flex; justify-content:space-between; align-items:center; padding:14px 18px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .d-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; }
-.d-close {
-  background:var(--card); border:none; color:var(--muted);
-  width:30px; height:30px; border-radius:50%; font-size:16px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-}
+.d-close { background:var(--card); border:none; color:var(--muted); width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .d-body { overflow-y:auto; flex:1; padding:12px 16px; }
 
-/* CART LIST */
-.c-item {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 0; border-bottom:1px solid var(--border);
-}
+/* ── CART ── */
+.c-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
 .c-item:last-child { border-bottom:none; }
 .c-emoji { font-size:28px; flex-shrink:0; }
 .c-info { flex:1; min-width:0; }
@@ -164,54 +82,189 @@ body {
 .c-price { font-family:'Syne',sans-serif; font-size:14px; color:var(--orange2); font-weight:700; flex-shrink:0; }
 .del-btn { background:none; border:none; color:var(--sub); font-size:18px; cursor:pointer; padding:4px; }
 
-/* FORM */
+/* ── FORM ── */
 .form-sec { padding:14px 0 4px; }
 .form-sec-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:10px; font-weight:600; }
-.inp {
-  width:100%; background:var(--card); border:1.5px solid var(--border);
-  border-radius:12px; color:var(--text); font-family:'DM Sans',sans-serif;
-  font-size:15px; padding:12px 14px; outline:none; transition:border-color .2s; margin-bottom:10px;
-}
+.inp { width:100%; background:var(--card); border:1.5px solid var(--border); border-radius:12px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; padding:12px 14px; outline:none; transition:border-color .2s; margin-bottom:10px; }
 .inp:focus { border-color:var(--orange); }
 .inp::placeholder { color:var(--sub); }
 .del-opts { display:flex; gap:8px; margin-bottom:10px; }
-.del-opt {
-  flex:1; padding:11px 6px; background:var(--card); border:1.5px solid var(--border);
-  border-radius:12px; text-align:center; cursor:pointer; transition:all .2s;
-  color:var(--muted); font-size:13px; font-weight:600;
-}
+.del-opt { flex:1; padding:11px 6px; background:var(--card); border:1.5px solid var(--border); border-radius:12px; text-align:center; cursor:pointer; transition:all .2s; color:var(--muted); font-size:13px; font-weight:600; }
 .del-opt .dicon { font-size:22px; display:block; margin-bottom:3px; }
 .del-opt.sel { border-color:var(--orange); background:rgba(255,107,43,.1); color:var(--text); }
-
-/* FOOTER */
 .d-footer { padding:12px 16px 24px; border-top:1px solid var(--border); flex-shrink:0; }
 .footer-total { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
 .ft-label { font-size:13px; color:var(--muted); }
 .ft-sum { font-family:'Syne',sans-serif; font-size:22px; color:var(--orange2); font-weight:700; }
-.confirm-btn {
-  width:100%;
-  background:linear-gradient(90deg,var(--orange),var(--orange2));
-  border:none; color:#fff; font-family:'Syne',sans-serif;
-  font-size:17px; font-weight:700; padding:14px; border-radius:14px;
-  cursor:pointer; transition:transform .15s;
-}
+.confirm-btn { width:100%; background:linear-gradient(90deg,var(--orange),var(--orange2)); border:none; color:#fff; font-family:'Syne',sans-serif; font-size:17px; font-weight:700; padding:14px; border-radius:14px; cursor:pointer; }
 .confirm-btn:active { transform:scale(.98); }
 .confirm-btn:disabled { background:var(--card); color:var(--sub); cursor:not-allowed; }
-
-/* ERROR */
-.err { color:#ff453a; font-size:13px; margin-bottom:8px; display:none; }
-
-/* SUCCESS */
-.success-wrap { text-align:center; padding:40px 20px; }
-.s-icon { font-size:68px; }
-.s-title { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:var(--green); margin:12px 0 8px; }
-.s-msg { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:24px; }
-.new-btn {
-  background:var(--orange); border:none; color:#fff;
-  font-family:'Syne',sans-serif; font-size:16px;
-  padding:13px 32px; border-radius:12px; cursor:pointer;
-}
+.err { color:var(--red); font-size:13px; margin-bottom:8px; display:none; }
 .empty-msg { text-align:center; padding:30px 0; color:var(--muted); font-size:14px; }
+
+/* ════════════════════════════════════════
+   SUCCESS / TRACKING EKRAN
+   ════════════════════════════════════════ */
+.success-page {
+  display:none;
+  position:fixed; inset:0;
+  background:var(--bg);
+  z-index:200;
+  overflow-y:auto;
+  padding-bottom:100px;
+}
+.success-page.show { display:block; }
+
+/* Header */
+.sp-header {
+  background:linear-gradient(135deg, #1a1a1a 0%, #2a1500 100%);
+  padding:32px 20px 24px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.sp-check {
+  width:72px; height:72px;
+  background:linear-gradient(135deg,var(--green),#00c851);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 16px;
+  font-size:36px;
+  box-shadow:0 0 30px rgba(48,209,88,.4);
+  animation: pop .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+.sp-title { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; color:var(--green); margin-bottom:6px; }
+.sp-oid {
+  display:inline-block;
+  background:rgba(48,209,88,.12);
+  border:1px solid rgba(48,209,88,.3);
+  border-radius:10px;
+  padding:6px 16px;
+  font-family:'Syne',sans-serif;
+  font-size:18px; font-weight:700;
+  color:var(--green);
+  letter-spacing:2px;
+}
+
+/* Status steps */
+.sp-steps {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  padding:20px 16px 0;
+}
+.sp-step {
+  display:flex; flex-direction:column; align-items:center;
+  flex:1; position:relative;
+}
+.sp-step:not(:last-child)::after {
+  content:'';
+  position:absolute;
+  top:18px; left:50%; width:100%;
+  height:2px;
+  background:var(--border);
+  z-index:0;
+}
+.sp-step.done::after  { background:var(--green); }
+.sp-step.active::after { background:var(--border); }
+.step-dot {
+  width:36px; height:36px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--card);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+  position:relative; z-index:1;
+  transition:all .3s;
+}
+.sp-step.done .step-dot   { border-color:var(--green); background:rgba(48,209,88,.15); }
+.sp-step.active .step-dot { border-color:var(--orange); background:rgba(255,107,43,.15); animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,107,43,.4)} 50%{box-shadow:0 0 0 8px rgba(255,107,43,0)} }
+.step-label { font-size:9px; color:var(--muted); margin-top:5px; text-align:center; font-weight:600; letter-spacing:.3px; }
+.sp-step.done .step-label   { color:var(--green); }
+.sp-step.active .step-label { color:var(--orange); }
+
+/* Order card */
+.sp-card {
+  margin:16px 14px 0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+}
+.sp-card-head {
+  padding:13px 16px;
+  background:rgba(255,107,43,.08);
+  border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.sp-card-head-title { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.sp-card-head-val   { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--orange2); }
+
+.sp-items { padding:10px 16px; }
+.sp-item  { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+.sp-item:last-child { border:none; }
+.sp-item-left  { display:flex; align-items:center; gap:8px; }
+.sp-item-emoji { font-size:22px; }
+.sp-item-info  {}
+.sp-item-name  { font-size:13px; font-weight:600; }
+.sp-item-qty   { font-size:11px; color:var(--muted); margin-top:1px; }
+.sp-item-price { font-family:'Syne',sans-serif; font-size:13px; color:var(--orange2); font-weight:700; }
+
+.sp-total-row {
+  margin:0 14px;
+  background:rgba(255,149,0,.08);
+  border:1px solid rgba(255,149,0,.2);
+  border-radius:12px;
+  padding:12px 16px;
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:10px;
+}
+.sp-total-label { font-size:13px; color:var(--muted); }
+.sp-total-val   { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--orange2); }
+
+/* Info rows */
+.sp-info { margin:10px 14px 0; background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+.sp-info-row { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.sp-info-row:last-child { border:none; }
+.sp-info-icon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+.sp-info-val  { font-size:14px; font-weight:500; }
+.sp-info-val span { color:var(--muted); font-size:11px; display:block; margin-top:1px; }
+
+/* Status badge */
+.sp-status {
+  margin:10px 14px 0;
+  background:rgba(48,209,88,.06);
+  border:1px solid rgba(48,209,88,.2);
+  border-radius:12px;
+  padding:12px 16px;
+  display:flex; align-items:center; gap:10px;
+}
+.sp-status-dot { width:10px; height:10px; background:var(--green); border-radius:50%; flex-shrink:0; animation:blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sp-status-text { font-size:14px; font-weight:600; }
+.sp-status-sub  { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* Send button */
+.sp-send-btn {
+  position:fixed; bottom:0; left:0; right:0;
+  padding:12px 14px 28px;
+  background:var(--bg);
+  border-top:1px solid var(--border);
+}
+.sp-btn {
+  width:100%;
+  background:linear-gradient(90deg,var(--orange),var(--orange2));
+  border:none; color:#fff;
+  font-family:'Syne',sans-serif;
+  font-size:17px; font-weight:700;
+  padding:15px; border-radius:14px;
+  cursor:pointer; transition:transform .15s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.sp-btn:active { transform:scale(.98); }
+.sp-btn.sent { background:var(--surface); color:var(--muted); cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -245,8 +298,6 @@ body {
 <!-- DRAWER -->
 <div class="drawer" id="drawer">
   <div class="d-handle"></div>
-
-  <!-- Cart view -->
   <div id="viewCart" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
     <div class="d-head">
       <div class="d-title">🛒 ZAKAZ</div>
@@ -267,7 +318,7 @@ body {
         <input class="inp" id="fName"  placeholder="Mijoz ismi *"             type="text">
         <input class="inp" id="fPhone" placeholder="Telefon: +998901234567 *" type="tel">
         <div id="addrWrap">
-          <input class="inp" id="fAddr" placeholder="Manzil (ko'cha, uy)" type="text">
+          <input class="inp" id="fAddr" placeholder="Manzil (ko'cha, uy raqami)" type="text">
         </div>
         <input class="inp" id="fNote" placeholder="Izoh (ixtiyoriy)" type="text">
       </div>
@@ -277,27 +328,100 @@ body {
         <span class="ft-label">Jami summa:</span>
         <span class="ft-sum" id="drawerTotal">0 so'm</span>
       </div>
-      <button class="confirm-btn" id="confirmBtn" onclick="placeOrder()">✅ ZAKAZNI YUBORISH</button>
-    </div>
-  </div>
-
-  <!-- Success view -->
-  <div id="viewSuccess" style="display:none; overflow-y:auto;">
-    <div class="success-wrap">
-      <div class="s-icon">🎉</div>
-      <div class="s-title">ZAKAZ YUBORILDI!</div>
-      <div class="s-msg">Kuryer Telegram da xabar oldi.<br>Zakaz tayyorlanmoqda! 🍳</div>
-      <button class="new-btn" onclick="newOrder()">+ Yangi zakaz</button>
+      <button class="confirm-btn" id="confirmBtn" onclick="previewOrder()">✅ ZAKAZNI YUBORISH</button>
     </div>
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     SUCCESS / TRACKING EKRAN
+     ════════════════════════════════════════ -->
+<div class="success-page" id="successPage">
+
+  <div class="sp-header">
+    <div class="sp-check">✅</div>
+    <div class="sp-title">ZAKAZ TAYYOR!</div>
+    <div class="sp-oid" id="spOid">#SF000000</div>
+  </div>
+
+  <!-- Status qadamlari -->
+  <div class="sp-steps" id="spSteps">
+    <div class="sp-step done" id="step0">
+      <div class="step-dot">📋</div>
+      <div class="step-label">Qabul</div>
+    </div>
+    <div class="sp-step active" id="step1">
+      <div class="step-dot">👨‍🍳</div>
+      <div class="step-label">Tayyorlanmoqda</div>
+    </div>
+    <div class="sp-step" id="step2">
+      <div class="step-dot">🛵</div>
+      <div class="step-label">Yetkazilmoqda</div>
+    </div>
+    <div class="sp-step" id="step3">
+      <div class="step-dot">🎉</div>
+      <div class="step-label">Yakunlandi</div>
+    </div>
+  </div>
+
+  <!-- Zakaz tarkibi -->
+  <div class="sp-card">
+    <div class="sp-card-head">
+      <span class="sp-card-head-title">📋 Taomlar</span>
+      <span class="sp-card-head-val" id="spItemCount"></span>
+    </div>
+    <div class="sp-items" id="spItems"></div>
+  </div>
+
+  <!-- Jami summa -->
+  <div class="sp-total-row">
+    <span class="sp-total-label">💰 Jami summa:</span>
+    <span class="sp-total-val" id="spTotal"></span>
+  </div>
+
+  <!-- Mijoz ma'lumotlari -->
+  <div class="sp-info">
+    <div class="sp-info-row">
+      <span class="sp-info-icon">👤</span>
+      <div class="sp-info-val" id="spName">—<span>Mijoz ismi</span></div>
+    </div>
+    <div class="sp-info-row">
+      <span class="sp-info-icon">📞</span>
+      <div class="sp-info-val" id="spPhone">—<span>Telefon</span></div>
+    </div>
+    <div class="sp-info-row" id="spAddrRow">
+      <span class="sp-info-icon">📍</span>
+      <div class="sp-info-val" id="spAddr">—<span>Manzil</span></div>
+    </div>
+    <div class="sp-info-row">
+      <span class="sp-info-icon">🚚</span>
+      <div class="sp-info-val" id="spDel">—<span>Yetkazish usuli</span></div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="sp-status">
+    <div class="sp-status-dot"></div>
+    <div>
+      <div class="sp-status-text">⏳ Zakaz kutilmoqda</div>
+      <div class="sp-status-sub">Telegram da yangilanishlarni kuzating</div>
+    </div>
+  </div>
+
+  <!-- Yuborish tugmasi -->
+  <div class="sp-send-btn">
+    <button class="sp-btn" id="spSendBtn" onclick="sendOrder()">
+      📤 Botga yuborish
+    </button>
+  </div>
+</div>
+
 <script>
-// ─── Telegram WebApp ─────────────────────────────────────────
+// ── Telegram WebApp ───────────────────────────────────────────
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-// ─── MENYU ───────────────────────────────────────────────────
+// ── MENYU ─────────────────────────────────────────────────────
 const CATS = [
   { id:'all',    label:'🍽 Barchasi' },
   { id:'hotdog', label:'🌭 Hot-dog'  },
@@ -320,24 +444,25 @@ const MENU = [
   { id:12, cat:'kabob',  name:'Mix Kabob (3ta)',   emoji:'🍢', price:45000 },
 ];
 
-// ─── STATE ───────────────────────────────────────────────────
+// ── STATE ─────────────────────────────────────────────────────
 let cart    = {};
 let curCat  = 'all';
 let delType = 'delivery';
+let pendingPayload = null; // yuborilishi kutayotgan zakaz
 
-// ─── TABS ────────────────────────────────────────────────────
+// ── TABS ──────────────────────────────────────────────────────
 function renderTabs() {
   document.getElementById('tabs').innerHTML = CATS.map(c =>
     `<div class="tab ${c.id===curCat?'active':''}" onclick="setCat('${c.id}')">${c.label}</div>`
   ).join('');
 }
-function setCat(id) { curCat = id; renderTabs(); renderGrid(); }
+function setCat(id) { curCat=id; renderTabs(); renderGrid(); }
 
-// ─── GRID ────────────────────────────────────────────────────
+// ── GRID ──────────────────────────────────────────────────────
 function renderGrid() {
-  const items = curCat === 'all' ? MENU : MENU.filter(m => m.cat === curCat);
+  const items = curCat==='all' ? MENU : MENU.filter(m=>m.cat===curCat);
   document.getElementById('grid').innerHTML = items.map(m => {
-    const qty = cart[m.id] || 0;
+    const qty = cart[m.id]||0;
     return `
     <div class="card">
       <div class="card-emoji">${m.emoji}</div>
@@ -355,45 +480,41 @@ function renderGrid() {
   }).join('');
 }
 
-// ─── CART ────────────────────────────────────────────────────
+// ── CART ──────────────────────────────────────────────────────
 function chg(id, delta) {
-  cart[id] = Math.max(0, (cart[id]||0) + delta);
+  cart[id] = Math.max(0,(cart[id]||0)+delta);
   if (!cart[id]) delete cart[id];
-  const q = cart[id]||0;
-  const qEl = document.getElementById('qty-'+id);
-  const dEl = document.getElementById('dot-'+id);
-  if (qEl) qEl.textContent = q;
-  if (dEl) { dEl.style.display = q>0?'flex':'none'; dEl.textContent = q; }
+  const q=cart[id]||0;
+  const qEl=document.getElementById('qty-'+id);
+  const dEl=document.getElementById('dot-'+id);
+  if(qEl) qEl.textContent=q;
+  if(dEl){ dEl.style.display=q>0?'flex':'none'; dEl.textContent=q; }
   refreshTotals();
 }
-
 function calcTotal() {
-  return Object.entries(cart).reduce((s,[id,qty]) => {
-    const m = MENU.find(x => x.id===+id);
-    return s + (m ? m.price*qty : 0);
-  }, 0);
+  return Object.entries(cart).reduce((s,[id,qty])=>{
+    const m=MENU.find(x=>x.id===+id); return s+(m?m.price*qty:0);
+  },0);
 }
-function totalCount() { return Object.values(cart).reduce((a,b)=>a+b, 0); }
-
+function totalCount() { return Object.values(cart).reduce((a,b)=>a+b,0); }
 function refreshTotals() {
-  const total = calcTotal();
-  const count = totalCount();
-  document.getElementById('cartCount').textContent   = count;
-  document.getElementById('totalSum').textContent    = total.toLocaleString()+' so\'m';
-  document.getElementById('drawerTotal').textContent = total.toLocaleString()+' so\'m';
-  document.getElementById('bottomBar').classList.toggle('show', count>0);
-  document.getElementById('confirmBtn').disabled = count===0;
+  const total=calcTotal(), count=totalCount();
+  document.getElementById('cartCount').textContent=count;
+  document.getElementById('totalSum').textContent=total.toLocaleString()+" so'm";
+  document.getElementById('drawerTotal').textContent=total.toLocaleString()+" so'm";
+  document.getElementById('bottomBar').classList.toggle('show',count>0);
+  document.getElementById('confirmBtn').disabled=count===0;
 }
 
-// ─── DELIVERY TYPE ───────────────────────────────────────────
+// ── DELIVERY TYPE ─────────────────────────────────────────────
 function setDel(type) {
-  delType = type;
-  document.getElementById('optDel').classList.toggle('sel',  type==='delivery');
+  delType=type;
+  document.getElementById('optDel').classList.toggle('sel', type==='delivery');
   document.getElementById('optPick').classList.toggle('sel', type==='pickup');
-  document.getElementById('addrWrap').style.display = type==='delivery'?'block':'none';
+  document.getElementById('addrWrap').style.display=type==='delivery'?'block':'none';
 }
 
-// ─── DRAWER ──────────────────────────────────────────────────
+// ── DRAWER ────────────────────────────────────────────────────
 function openDrawer() {
   renderCartList();
   document.getElementById('overlay').classList.add('show');
@@ -403,94 +524,125 @@ function closeDrawer() {
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('drawer').classList.remove('open');
 }
-
 function renderCartList() {
-  const keys = Object.keys(cart).filter(k=>cart[k]>0);
-  const el   = document.getElementById('cartList');
-  if (!keys.length) { el.innerHTML='<div class="empty-msg">🛒 Savatcha bo\'sh</div>'; return; }
-  el.innerHTML = keys.map(id => {
-    const m = MENU.find(x=>x.id===+id);
+  const keys=Object.keys(cart).filter(k=>cart[k]>0);
+  const el=document.getElementById('cartList');
+  if(!keys.length){ el.innerHTML='<div class="empty-msg">🛒 Savatcha bo\'sh</div>'; return; }
+  el.innerHTML=keys.map(id=>{
+    const m=MENU.find(x=>x.id===+id);
     return `
     <div class="c-item">
       <div class="c-emoji">${m.emoji}</div>
-      <div class="c-info">
-        <div class="c-name">${m.name}</div>
-        <div class="c-sub">${cart[id]} × ${m.price.toLocaleString()}</div>
-      </div>
+      <div class="c-info"><div class="c-name">${m.name}</div><div class="c-sub">${cart[id]} × ${m.price.toLocaleString()}</div></div>
       <div class="c-price">${(m.price*cart[id]).toLocaleString()}</div>
       <button class="del-btn" onclick="removeItem(${id})">✕</button>
     </div>`;
   }).join('');
 }
-
 function removeItem(id) {
   delete cart[id];
-  const dEl = document.getElementById('dot-'+id);
-  const qEl = document.getElementById('qty-'+id);
-  if (dEl) dEl.style.display='none';
-  if (qEl) qEl.textContent='0';
-  refreshTotals();
-  renderCartList();
+  const dEl=document.getElementById('dot-'+id);
+  const qEl=document.getElementById('qty-'+id);
+  if(dEl) dEl.style.display='none';
+  if(qEl) qEl.textContent='0';
+  refreshTotals(); renderCartList();
 }
 
-// ─── PLACE ORDER ─────────────────────────────────────────────
+// ── VALIDATE + PREVIEW ────────────────────────────────────────
 function showErr(msg) {
-  const el = document.getElementById('errMsg');
-  el.textContent = msg; el.style.display='block';
+  const el=document.getElementById('errMsg');
+  el.textContent=msg; el.style.display='block';
 }
 
-function placeOrder() {
-  document.getElementById('errMsg').style.display = 'none';
-
+function previewOrder() {
+  document.getElementById('errMsg').style.display='none';
   const name  = document.getElementById('fName').value.trim();
   const phone = document.getElementById('fPhone').value.trim().replace(/\s/g,'');
   const addr  = delType==='delivery' ? document.getElementById('fAddr').value.trim() : '';
   const note  = document.getElementById('fNote').value.trim();
 
-  if (!name)  { showErr('❌ Mijoz ismini kiriting'); return; }
-  if (!phone) { showErr('❌ Telefon raqamini kiriting'); return; }
-  if (!/^\+?[0-9]{9,13}$/.test(phone)) {
-    showErr('❌ Telefon noto\'g\'ri (masalan: +998901234567)');
-    return;
-  }
-  if (!totalCount()) { showErr('❌ Savatcha bo\'sh'); return; }
+  if(!name)  { showErr('❌ Mijoz ismini kiriting'); return; }
+  if(!phone) { showErr('❌ Telefon raqamini kiriting'); return; }
+  if(!/^\+?[0-9]{9,13}$/.test(phone)){ showErr('❌ Telefon noto\'g\'ri (+998901234567)'); return; }
+  if(!totalCount()){ showErr('❌ Savatcha bo\'sh'); return; }
 
-  // Ikki marta bosilishdan himoya
-  const btn = document.getElementById('confirmBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Yuborilmoqda...';
-
-  const items = Object.keys(cart).filter(k=>cart[k]>0).map(id => {
-    const m = MENU.find(x=>x.id===+id);
+  const items = Object.keys(cart).filter(k=>cart[k]>0).map(id=>{
+    const m=MENU.find(x=>x.id===+id);
     return { name:m.name, emoji:m.emoji, qty:cart[id], price:m.price };
   });
+  const total = calcTotal();
 
-  const payload = { name, phone, addr, note, delType, items, total:calcTotal() };
+  pendingPayload = { name, phone, addr, note, delType, items, total };
+  closeDrawer();
+  showSuccessScreen(pendingPayload);
+}
 
-  if (tg) {
-    // sendData yuboradi va Mini Appni yopadi
-    tg.sendData(JSON.stringify(payload));
+// ── SUCCESS EKRAN ─────────────────────────────────────────────
+function showSuccessScreen(p) {
+  // Order ID preview (haqiqiy ID bot tomonida generatsiya qilinadi)
+  document.getElementById('spOid').textContent = '⏳ Yuborilmoqda...';
+  document.getElementById('spItemCount').textContent = p.items.length + ' ta taom';
+
+  // Mahsulotlar
+  document.getElementById('spItems').innerHTML = p.items.map(i => `
+    <div class="sp-item">
+      <div class="sp-item-left">
+        <div class="sp-item-emoji">${i.emoji}</div>
+        <div class="sp-item-info">
+          <div class="sp-item-name">${i.name}</div>
+          <div class="sp-item-qty">×${i.qty} dona</div>
+        </div>
+      </div>
+      <div class="sp-item-price">${(i.price*i.qty).toLocaleString()} so'm</div>
+    </div>`).join('');
+
+  document.getElementById('spTotal').textContent = p.total.toLocaleString() + ' so\'m';
+
+  // Mijoz
+  document.getElementById('spName').innerHTML  = `${p.name}<span>Mijoz ismi</span>`;
+  document.getElementById('spPhone').innerHTML = `${p.phone}<span>Telefon</span>`;
+  document.getElementById('spDel').innerHTML   = p.delType==='delivery'
+    ? `🛵 Yetkazib berish<span>Usul</span>`
+    : `🏃 O'zi oladi<span>Usul</span>`;
+
+  const addrRow = document.getElementById('spAddrRow');
+  if(p.addr) {
+    document.getElementById('spAddr').innerHTML = `${p.addr}<span>Manzil</span>`;
+    addrRow.style.display='flex';
+  } else {
+    addrRow.style.display='none';
   }
 
-  // Success ko'rinish
-  document.getElementById('viewCart').style.display    = 'none';
-  document.getElementById('viewSuccess').style.display = 'block';
+  // Send tugmasini reset
+  const btn = document.getElementById('spSendBtn');
+  btn.className = 'sp-btn';
+  btn.innerHTML = '📤 Botga yuborish';
+  btn.disabled  = false;
+
+  document.getElementById('successPage').classList.add('show');
 }
 
-function newOrder() {
-  cart = {};
-  ['fName','fPhone','fAddr','fNote'].forEach(id => document.getElementById(id).value='');
-  const btn = document.getElementById('confirmBtn');
-  btn.disabled = false;
-  btn.textContent = '✅ ZAKAZNI YUBORISH';
-  document.getElementById('viewCart').style.display    = 'flex';
-  document.getElementById('viewSuccess').style.display = 'none';
-  refreshTotals();
-  closeDrawer();
-  renderGrid();
+// ── SEND TO BOT ───────────────────────────────────────────────
+function sendOrder() {
+  if(!pendingPayload) return;
+  const btn = document.getElementById('spSendBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Yuborilmoqda...';
+  btn.className = 'sp-btn sent';
+
+  if(tg) {
+    tg.sendData(JSON.stringify(pendingPayload));
+    // sendData Mini Appni yopadi
+  } else {
+    // Test uchun (brauzerda)
+    setTimeout(()=>{
+      document.getElementById('spOid').textContent = '#SF_TEST';
+      btn.innerHTML = '✅ Yuborildi!';
+    }, 800);
+  }
 }
 
-// ─── INIT ────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────
 renderTabs();
 renderGrid();
 </script>
